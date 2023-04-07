@@ -68,6 +68,37 @@ def extract_terms(documents, term_extract_str, llm_name, model_temperature, api_
         for x in terms_definitions
     }
     return terms_to_definition
+def read_directory(directory_path):
+    """
+     Прочитать все файлы в каталоге и подкаталогах и извлечь из них текст.
+
+    Args:
+        directory_path (str): Path to the directory.
+
+    Returns:
+        List[Document]: Список документов, где каждый документ соответствует файлу в каталоге..
+    """
+    documents = []
+    for root, _, files in os.walk(directory_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_extension = os.path.splitext(file_path)[1].lower()
+            if file_extension in file_extractor:
+                with open(file_path, "rb") as f:
+                    content = f.read()
+                    extracted = file_extractor[file_extension](content)
+                    text = extracted.get("text", "")
+                    if text.strip():
+                        # create the directory "text/postoyanno" if it doesn't exist
+                        os.makedirs("text/postoyanno", exist_ok=True)
+                        # create the file name by appending ".txt" to the original file name
+                        output_file_name = os.path.join("text/postoyanno", file.split(".")[0] + ".txt")
+                        # write the extracted text to the output file
+                        with open(output_file_name, "w", encoding="utf-8") as output_file:
+                            output_file.write(text)
+                        documents.append(Document(text))
+    return documents
+
 
 
 def insert_terms(terms_to_definition):
@@ -113,6 +144,18 @@ with setup_tab:
     term_extract_str = st.text_area(
         "Запрос для извлечения терминов и определений.", value=DEFAULT_TERM_STR
     )
+    directory_path = st.text_input("Введите путь к папке для чтения файлов")
+
+    if st.button("Инициализация индекса и сброс условий", key="init_index_1"):
+        st.session_state["llama_index"] = initialize_index(
+            llm_name, model_temperature, api_key
+        )
+        st.session_state["all_terms"] = DEFAULT_TERMS
+
+        if directory_path:
+            documents = read_directory(directory_path)
+            st.session_state["llama_index"].insert(*documents)
+
 
 
 with terms_tab:
