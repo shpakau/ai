@@ -17,8 +17,8 @@ from constants import DEFAULT_TERM_STR, DEFAULT_TERMS, REFINE_TEMPLATE, TEXT_QA_
 from utils import get_llm
 
 
-if "все термины" not in st.session_state:
-    st.session_state["все термины"] = DEFAULT_TERMS
+if "all_terms" not in st.session_state:
+    st.session_state["all_terms"] = DEFAULT_TERMS
 
 
 @st.cache_resource
@@ -134,7 +134,7 @@ setup_tab, terms_tab, upload_tab, query_tab = st.tabs(
 
 with setup_tab:
     st.subheader("LLM настройка")
-    api_key = st.text_input("Введите свой ключ API OpenAI здесь", type="пароль")
+    api_key = st.text_input("Введите свой ключ API OpenAI здесь", type="password")
     llm_name = st.selectbox(
         "Какие LLM?", ["text-davinci-003", "gpt-3.5-turbo", "gpt-4"]
     )
@@ -229,7 +229,7 @@ with query_tab:
     st.markdown(
         (
             "LLM попытается ответить на ваш запрос и дополнит свои ответы, используя введенные вами термины/определения. "
-            "Если термина нет в индексе, он ответит, используя свои внутренние знания".
+            "Если термина нет в индексе, он ответит, используя свои внутренние знания"
         )
     )
     if st.button("Инициализация индекса и сброс условий", key="init_index_2"):
