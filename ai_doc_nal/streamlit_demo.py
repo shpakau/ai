@@ -17,8 +17,8 @@ from constants import DEFAULT_TERM_STR, DEFAULT_TERMS, REFINE_TEMPLATE, TEXT_QA_
 from utils import get_llm
 
 
-if "all_terms" not in st.session_state:
-    st.session_state["all_terms"] = DEFAULT_TERMS
+if "все термины" not in st.session_state:
+    st.session_state["все термины"] = DEFAULT_TERMS
 
 
 @st.cache_resource
@@ -52,18 +52,18 @@ def extract_terms(documents, term_extract_str, llm_name, model_temperature, api_
 
     temp_index = GPTListIndex.from_documents(documents, service_context=service_context)
     terms_definitions = str(
-        temp_index.query(term_extract_str, response_mode="tree_summarize")
+        temp_index.query(term_extract_str, response_mode="дерево_суммирования")
     )
     terms_definitions = [
         x
         for x in terms_definitions.split("\n")
-        if x and "Term:" in x and "Definition:" in x
+        if x and "Срок:" in x and "Определение:" in x
     ]
-    # parse the text into a dict
+    # разобрать текст на дикту
     terms_to_definition = {
-        x.split("Definition:")[0]
-        .split("Term:")[-1]
-        .strip(): x.split("Definition:")[-1]
+        x.split("Определение:")[0]
+        .split("Срок:")[-1]
+        .strip(): x.split("Определение:")[-1]
         .strip()
         for x in terms_definitions
     }
@@ -72,13 +72,13 @@ def extract_terms(documents, term_extract_str, llm_name, model_temperature, api_
 
 def insert_terms(terms_to_definition):
     for term, definition in terms_to_definition.items():
-        doc = Document(f"Term: {term}\nDefinition: {definition}")
+        doc = Document(f"Срок: {term}\nОпределение: {definition}")
         st.session_state["llama_index"].insert(doc)
 
 
 @st.cache_resource
 def initialize_index(llm_name, model_temperature, api_key):
-    """Create the GPTSQLStructStoreIndex object."""
+    """Создайте объект GPTSQLStructStoreIndex."""
     llm = get_llm(llm_name, model_temperature, api_key)
 
     service_context = ServiceContext.from_defaults(llm_predictor=LLMPredictor(llm=llm))
@@ -90,42 +90,39 @@ def initialize_index(llm_name, model_temperature, api_key):
     return index
 
 
-st.title("🦙 Llama Index Term Extractor 🦙")
+st.title("🦙 Экстрактор терминов индекса Llama 🦙")
 st.markdown(
     (
-        "This demo allows you to upload your own documents (either a screenshot/image or the actual text) and extract terms and definitions, building a knowledge base!\n\n"
-        "Powered by [Llama Index](https://gpt-index.readthedocs.io/en/latest/index.html) and OpenAI, you can augment the existing knowledge of an "
-        "LLM using your own notes, documents, and images. Then, when you ask about a term or definition, it will use your data first! "
-        "The app is currently pre-loaded with terms from the NYC Wikipedia page."
+        "Эта программа позволяет загружать ваши собственные документы (либо скриншот/изображение, либо реальный текст) и извлекать термины и определения, создавая базу знаний."
     )
 )
 
 setup_tab, terms_tab, upload_tab, query_tab = st.tabs(
-    ["Setup", "All Terms", "Upload/Extract Terms", "Query Terms"]
+    ["Настройка", "Все условия", "Условия загрузки/извлечения", "Условия запроса"]
 )
 
 with setup_tab:
-    st.subheader("LLM Setup")
-    api_key = st.text_input("Enter your OpenAI API key here", type="password")
+    st.subheader("LLM настройка")
+    api_key = st.text_input("Введите свой ключ API OpenAI здесь", type="пароль")
     llm_name = st.selectbox(
-        "Which LLM?", ["text-davinci-003", "gpt-3.5-turbo", "gpt-4"]
+        "Какие LLM?", ["text-davinci-003", "gpt-3.5-turbo", "gpt-4"]
     )
     model_temperature = st.slider(
-        "LLM Temperature", min_value=0.0, max_value=1.0, step=0.1
+        "Температура LLM", min_value=0.0, max_value=1.0, step=0.1
     )
     term_extract_str = st.text_area(
-        "The query to extract terms and definitions with.", value=DEFAULT_TERM_STR
+        "Запрос для извлечения терминов и определений.", value=DEFAULT_TERM_STR
     )
 
 
 with terms_tab:
-    st.subheader("Current Extracted Terms and Definitions")
+    st.subheader("Текущие извлеченные термины и определения")
     st.json(st.session_state["all_terms"])
 
 
 with upload_tab:
-    st.subheader("Extract and Query Definitions")
-    if st.button("Initialize Index and Reset Terms", key="init_index_1"):
+    st.subheader("Определения извлечений и запросов")
+    if st.button("Инициализация индекса и сброс условий", key="init_index_1"):
         st.session_state["llama_index"] = initialize_index(
             llm_name, model_temperature, api_key
         )
@@ -133,18 +130,18 @@ with upload_tab:
 
     if "llama_index" in st.session_state:
         st.markdown(
-            "Either upload an image/screenshot of a document, or enter the text manually."
+            "Либо загрузите изображение/скриншот документа, либо введите текст вручную."
         )
         uploaded_file = st.file_uploader(
-            "Upload an image/screenshot of a document:", type=["png", "jpg", "jpeg"]
+            "Загрузить изображение/скриншот документа:", type=["png", "jpg", "jpeg"]
         )
-        document_text = st.text_area("Or enter raw text")
-        if st.button("Extract Terms and Definitions") and (
+        document_text = st.text_area("Или введите необработанный текст")
+        if st.button("Термины и определения экстракта") and (
             uploaded_file or document_text
         ):
-            st.session_state["terms"] = {}
+            st.session_state["условия"] = {}
             terms_docs = {}
-            with st.spinner("Extracting (images may be slow)..."):
+            with st.spinner("Извлечение (изображения могут быть медленными)..."):
                 if document_text:
                     terms_docs.update(
                         extract_terms(
@@ -171,37 +168,37 @@ with upload_tab:
                             api_key,
                         )
                     )
-            st.session_state["terms"].update(terms_docs)
+            st.session_state["условия"].update(terms_docs)
 
-    if "terms" in st.session_state and st.session_state["terms"]:
+    if "условия" in st.session_state and st.session_state["условия"]:
         st.markdown("Extracted terms")
-        st.json(st.session_state["terms"])
+        st.json(st.session_state["условия"])
 
         if st.button("Insert terms?"):
             with st.spinner("Inserting terms"):
-                insert_terms(st.session_state["terms"])
-            st.session_state["all_terms"].update(st.session_state["terms"])
-            st.session_state["terms"] = {}
+                insert_terms(st.session_state["условия"])
+            st.session_state["all_terms"].update(st.session_state["условия"])
+            st.session_state["условия"] = {}
             st.experimental_rerun()
 
 with query_tab:
-    st.subheader("Query for Terms/Definitions!")
+    st.subheader("Запрос терминов/определений!")
     st.markdown(
         (
-            "The LLM will attempt to answer your query, and augment it's answers using the terms/definitions you've inserted. "
-            "If a term is not in the index, it will answer using it's internal knowledge."
+            "LLM попытается ответить на ваш запрос и дополнит свои ответы, используя введенные вами термины/определения. "
+            "Если термина нет в индексе, он ответит, используя свои внутренние знания".
         )
     )
-    if st.button("Initialize Index and Reset Terms", key="init_index_2"):
+    if st.button("Инициализация индекса и сброс условий", key="init_index_2"):
         st.session_state["llama_index"] = initialize_index(
             llm_name, model_temperature, api_key
         )
         st.session_state["all_terms"] = DEFAULT_TERMS
 
     if "llama_index" in st.session_state:
-        query_text = st.text_input("Ask about a term or definition:")
+        query_text = st.text_input("Спросите о термине или определении:")
         if query_text:
-            with st.spinner("Generating answer..."):
+            with st.spinner("Генерация ответа..."):
                 response = st.session_state["llama_index"].query(
                     query_text, similarity_top_k=5, response_mode="compact",
                     text_qa_template=TEXT_QA_TEMPLATE, refine_template=REFINE_TEMPLATE
