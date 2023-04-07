@@ -30,6 +30,8 @@ def get_file_extractor():
             ".jpg": image_parser,
             ".png": image_parser,
             ".jpeg": image_parser,
+            ".pdf": image_parser,
+            ".txt": image_parser,
         }
     )
 
@@ -121,7 +123,7 @@ def initialize_index(llm_name, model_temperature, api_key):
     return index
 
 
-st.title("🦙 Экстрактор терминов индекса Llama 🦙")
+st.title("Экстрактор терминов индекса Llama 🦙")
 st.markdown(
     (
         "Эта программа позволяет загружать ваши собственные документы (либо скриншот/изображение, либо реальный текст) и извлекать термины и определения, создавая базу знаний."
@@ -146,7 +148,7 @@ with setup_tab:
     )
     directory_path = st.text_input("Введите путь к папке для чтения файлов")
 
-    if st.button("Инициализация индекса и сброс условий", key="init_index_1"):
+    if st.button("Инициализация индекса и сброс условий", key="init_index"):
         st.session_state["llama_index"] = initialize_index(
             llm_name, model_temperature, api_key
         )
